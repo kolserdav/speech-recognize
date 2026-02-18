@@ -1,116 +1,147 @@
-// @ts-check
-
-/**
- * @type {{
- *   continuous: boolean;
- *   interimResults: boolean;
- *   onstart: () => void;
- *   lang: string;
- *   onerror: (e: Error) => void;
- *   onresult: (e: {
- *    results?: { isFinal: boolean; 0: { transcript: string } }[];
- *   resultIndex: number;
- *  }) => void;
- *  onend: (() => void) | null;
- *  start: () => void;
- * stop: () => void;
- * }} webkitSpeechRecognition
- */
-// @ts-ignore
-const recognition = new webkitSpeechRecognition();
+// Check for Speech Recognition support
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
 (async () => {
-  if (!("webkitSpeechRecognition" in window)) {
-    alert("Speech recognitiion not accepted on this browser");
-    return;
-  }
-  const microAllow = await new Promise((resolve) => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then(() => {
-        resolve(true);
-      })
-      .catch((err) => {
-        console.error("Error get user media", err);
-        resolve(false);
-      });
-  });
-  if (!microAllow) {
-    alert("Microphone is not allowed");
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported in this browser");
+    console.error("SpeechRecognition API not available");
     return;
   }
 
+  // Create recognition instance
+  const recognition = new SpeechRecognition();
+
+  // Check microphone access
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log("Microphone access granted");
+  } catch (err) {
+    console.error("Error accessing microphone:", err);
+    alert("Microphone access is required for speech recognition");
+    return;
+  }
+
+  // Recognition settings
   recognition.continuous = true;
   recognition.interimResults = true;
+  recognition.lang = "ru-RU"; // Important: use correct language format
+  recognition.maxAlternatives = 1;
 
+  let finalTranscript = "";
+  let interimTranscript = "";
+
+  // Event handlers
   recognition.onstart = () => {
-    console.info("Start speech recognize");
+    console.info("Speech recognition started");
+    finalTranscript = "";
+    interimTranscript = "";
   };
 
   recognition.onerror = (event) => {
-    // @ts-ignore
-    const error = event.error;
-    console.error(`Error speech recogn ${error}`, event, true);
+    console.error(`Speech recognition error: ${event.error}`, event);
+
+    // Auto-restart on certain errors
+    if (event.error === "no-speech" || event.error === "network") {
+      setTimeout(() => {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error("Failed to restart recognition:", e);
+        }
+      }, 1000);
+    }
   };
 
   recognition.onend = () => {
-    console.info("End speech recognize");
+    console.info("Speech recognition ended");
+    // Update final text
+    updateDisplay();
   };
-  const data = document.querySelector("#data");
-  if (!data) {
-    console.error("Block data is not found");
-    return;
-  }
 
-  let intTranscipt = {};
   recognition.onresult = (event) => {
-    console.log(event.results);
-    if (!event.results) {
-      console.warn("Results is", event.results);
-      return;
-    }
-    for (let i = 0; event.results[i]; i++) {
-      intTranscipt[i] = event.results[i][0].transcript
-        .replace("тчк", ".")
-        .replace("зпт", ",");
-      intTranscipt[i] = intTranscipt[i];
+    interimTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+
       if (event.results[i].isFinal) {
-        let _data = "";
-        for (let _i = 0; intTranscipt[_i]; _i++) {
-          _data += intTranscipt[_i];
-          data.innerHTML = _data;
-        }
+        // Replace special markers
+        const processedTranscript = transcript
+          .replace(/тчк/gi, ".")
+          .replace(/зпт/gi, ",")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        finalTranscript += (finalTranscript ? " " : "") + processedTranscript;
+      } else {
+        interimTranscript += transcript;
       }
     }
+
+    updateDisplay();
   };
 
-  recognition.lang = "ru";
+  // Display update function
+  function updateDisplay() {
+    const dataElement = document.querySelector("#data");
+    if (dataElement) {
+      let displayText = finalTranscript;
+      if (interimTranscript) {
+        displayText +=
+          (displayText ? " " : "") +
+          `<span style="color: #666; font-style: italic;">${interimTranscript}</span>`;
+      }
+      dataElement.innerHTML = displayText || "Start speaking...";
+    }
+  }
 
+  // Button handlers
   const buttonStart = document.querySelector("#start");
   const buttonStop = document.querySelector("#stop");
-  if (!buttonStart) {
-    console.error("Button start is missing");
+
+  if (!buttonStart || !buttonStop) {
+    console.error("Required buttons not found");
     return;
   }
-  if (!buttonStop) {
-    console.error("Button stop is missing");
-    return;
-  }
+
+  let isRecognizing = false;
+
   buttonStart.addEventListener("click", () => {
-    try {
-      recognition.start();
-    } catch (e) {
-      console.error("Recognition is already started", e);
+    if (!isRecognizing) {
+      try {
+        recognition.start();
+        isRecognizing = true;
+        buttonStart.disabled = true;
+        buttonStop.disabled = false;
+        console.log("Recognition started");
+      } catch (error) {
+        console.error("Failed to start recognition:", error);
+        isRecognizing = false;
+      }
     }
   });
 
   buttonStop.addEventListener("click", () => {
-    try {
-      recognition.stop();
-      console.log(intTranscipt);
-      intTranscipt = {};
-    } catch (e) {
-      console.error("Recognition is already stoped", e);
+    if (isRecognizing) {
+      try {
+        recognition.stop();
+        isRecognizing = false;
+        buttonStart.disabled = false;
+        buttonStop.disabled = true;
+        console.log("Recognition stopped");
+
+        // Output result to console
+        console.log("Final transcript:", finalTranscript);
+      } catch (error) {
+        console.error("Failed to stop recognition:", error);
+      }
     }
   });
+
+  // UI initialization
+  buttonStop.disabled = true;
+  updateDisplay();
+
+  console.log("Speech recognition initialized successfully");
 })();

@@ -1,9 +1,9 @@
 // @ts-check
 const fastify = require("fastify")({ logger: true });
 const path = require("path");
-const static = require("@fastify/static");
+const staticF = require("@fastify/static");
 
-fastify.register(static, {
+fastify.register(staticF, {
   root: path.join(__dirname, "public"),
   prefix: "/",
   constraints: {},
