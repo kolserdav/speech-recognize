@@ -36,7 +36,7 @@ const SpeechRecognition =
     console.info("Speech recognition started");
     finalTranscript = "";
     interimTranscript = "";
-    updateStatus("Запись...", "green");
+    updateStatus("Recording...", "green");
   };
 
   recognition.onerror = (event) => {
@@ -56,7 +56,7 @@ const SpeechRecognition =
 
   recognition.onend = () => {
     console.info("Speech recognition ended");
-    updateStatus("Ожидание", "red");
+    updateStatus("Waiting...", "red");
     // Update final text
     updateDisplay();
   };
@@ -126,17 +126,17 @@ const SpeechRecognition =
   async function copyToClipboard() {
     const textToCopy = finalTranscript;
     if (!textToCopy) {
-      showToast("Нет текста для копирования", "error");
+      showToast("No text to copy", "error");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(textToCopy);
       console.log("Text copied to clipboard");
-      showToast("Текст скопирован!", "success");
+      showToast("Text copied!", "success");
     } catch (err) {
       console.error("Failed to copy text:", err);
-      showToast("Ошибка копирования", "error");
+      showToast("Copy error", "error");
     }
   }
 
@@ -174,7 +174,7 @@ const SpeechRecognition =
         isRecognizing = false;
         buttonStart.disabled = false;
         buttonStop.disabled = true;
-        updateStatus("Ожидание", "red");
+        updateStatus("Waiting...", "red");
         console.log("Recognition stopped");
 
         // Output result to console
@@ -192,7 +192,7 @@ const SpeechRecognition =
 
   // UI initialization
   buttonStop.disabled = true;
-  updateStatus("Ожидание", "red");
+  updateStatus("Waiting...", "red");
   updateDisplay();
 
   console.log("Speech recognition initialized successfully");
