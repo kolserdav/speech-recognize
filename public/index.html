@@ -21,26 +21,43 @@
         word-wrap: break-word;
         white-space: pre-wrap;
       }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1f2937;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 50;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .toast.success {
+        background-color: #10b981;
+      }
+      .toast.error {
+        background-color: #ef4444;
+      }
     </style>
   </head>
   <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen flex flex-col items-center justify-center p-4">
     <div class="w-full max-w-4xl bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
       <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-center">
-        <h1 class="text-2xl font-bold text-white tracking-tight">
+      <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-center">
+        <h1 class="text-3xl font-bold text-white tracking-tight">
           Аудио Проигрыватель
         </h1>
-        <p class="text-blue-100 mt-1 text-xs">Распознавание речи в реальном времени</p>
+        <p class="text-blue-100 mt-2 text-sm">Распознавание речи в реальном времени</p>
       </div>
 
       <!-- Main Content -->
       <div class="p-8">
-        <!-- Status Indicator -->
-        <div class="flex items-center justify-center mb-8">
-          <div id="status-indicator" class="w-4 h-4 rounded-full bg-red-500 mr-3"></div>
-          <span id="status-text" class="text-gray-600 font-medium">Ожидание</span>
-        </div>
-
         <!-- Controls -->
         <div class="flex gap-4 justify-center mb-8">
           <button id="start" class="group relative overflow-hidden bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-green-500/30">
@@ -75,6 +92,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
   </body>
   <script src="/js/index.js"></script>
 </html>

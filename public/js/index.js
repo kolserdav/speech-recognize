@@ -36,6 +36,7 @@ const SpeechRecognition =
     console.info("Speech recognition started");
     finalTranscript = "";
     interimTranscript = "";
+    updateStatus("Запись...", "green");
   };
 
   recognition.onerror = (event) => {
@@ -55,6 +56,7 @@ const SpeechRecognition =
 
   recognition.onend = () => {
     console.info("Speech recognition ended");
+    updateStatus("Ожидание", "red");
     // Update final text
     updateDisplay();
   };
@@ -96,27 +98,52 @@ const SpeechRecognition =
     }
   }
 
+  // Status indicator function
+  function updateStatus(text, color) {
+    const statusIndicator = document.querySelector("#status-indicator");
+    const statusText = document.querySelector("#status-text");
+    if (statusIndicator) {
+      statusIndicator.className = `w-4 h-4 rounded-full bg-${color}-500 mr-3`;
+    }
+    if (statusText) {
+      statusText.textContent = text;
+    }
+  }
+
+  // Toast notification function
+  function showToast(message, type = "success") {
+    const toast = document.querySelector("#toast");
+    if (toast) {
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => {
+        toast.className = "toast";
+      }, 3000);
+    }
+  }
+
   // Copy to clipboard function
   async function copyToClipboard() {
     const textToCopy = finalTranscript;
     if (!textToCopy) {
-      console.log("No text to copy");
+      showToast("Нет текста для копирования", "error");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(textToCopy);
       console.log("Text copied to clipboard");
-      alert("Text copied to clipboard!");
+      showToast("Текст скопирован!", "success");
     } catch (err) {
       console.error("Failed to copy text:", err);
-      alert("Failed to copy text to clipboard");
+      showToast("Ошибка копирования", "error");
     }
   }
 
   // Button handlers
   const buttonStart = document.querySelector("#start");
   const buttonStop = document.querySelector("#stop");
+  const buttonCopy = document.querySelector("#copy");
 
   if (!buttonStart || !buttonStop) {
     console.error("Required buttons not found");
@@ -147,6 +174,7 @@ const SpeechRecognition =
         isRecognizing = false;
         buttonStart.disabled = false;
         buttonStop.disabled = true;
+        updateStatus("Ожидание", "red");
         console.log("Recognition stopped");
 
         // Output result to console
@@ -158,13 +186,13 @@ const SpeechRecognition =
   });
 
   // Button handler for copy
-  const buttonCopy = document.querySelector("#copy");
   if (buttonCopy) {
     buttonCopy.addEventListener("click", copyToClipboard);
   }
 
   // UI initialization
   buttonStop.disabled = true;
+  updateStatus("Ожидание", "red");
   updateDisplay();
 
   console.log("Speech recognition initialized successfully");
