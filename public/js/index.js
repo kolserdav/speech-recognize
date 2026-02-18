@@ -96,6 +96,24 @@ const SpeechRecognition =
     }
   }
 
+  // Copy to clipboard function
+  async function copyToClipboard() {
+    const textToCopy = finalTranscript;
+    if (!textToCopy) {
+      console.log("No text to copy");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      console.log("Text copied to clipboard");
+      alert("Text copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+      alert("Failed to copy text to clipboard");
+    }
+  }
+
   // Button handlers
   const buttonStart = document.querySelector("#start");
   const buttonStop = document.querySelector("#stop");
@@ -138,6 +156,12 @@ const SpeechRecognition =
       }
     }
   });
+
+  // Button handler for copy
+  const buttonCopy = document.querySelector("#copy");
+  if (buttonCopy) {
+    buttonCopy.addEventListener("click", copyToClipboard);
+  }
 
   // UI initialization
   buttonStop.disabled = true;
